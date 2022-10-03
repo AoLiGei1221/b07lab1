@@ -1,7 +1,6 @@
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Scanner;
 import java.io.File;
 
@@ -108,18 +107,21 @@ public class Polynomial{
                 other.coefficients[x] = temp4;
             }
         }
-        int max_exp = Math.max(this.exp[this.exp.length - 1], other.exp[other.exp.length -1]);
+        //after sorting the array, we can directly get the max ex's index
+        int this_max_idx = this.exp.length - 1;
+        int other_max_idx = other.exp.length - 1;
+        int max_exp = Math.max(this.exp[this_max_idx], other.exp[other_max_idx]);
         double[] temp_coe = new double[max_exp + 1];
         for (int i = 0; i < this.coefficients.length; i++)
-            temp_coe[this.exp[i]] += this.coefficients[i];
+            temp_coe[this.exp[i]] = temp_coe[this.exp[i]] + this.coefficients[i];
 
         for (int i = 0; i < other.coefficients.length; i++)
-            temp_coe[other.exp[i]] += other.coefficients[i];
+            temp_coe[other.exp[i]] = temp_coe[other.exp[i]] + other.coefficients[i];
 
         // count how many non-zero coefficients and accelerate length
         int len = 0;
-        for (double v : temp_coe)
-            if (v != 0)
+        for (double coe : temp_coe)
+            if (coe != 0)
                 len++;
 
         double[] new_coe = new double[len];
@@ -129,8 +131,7 @@ public class Polynomial{
         for (int i = 0; i < temp_coe.length; i++) {
             if (temp_coe[i] != 0) {
                 new_coe[j] = temp_coe[i];
-                new_exp[j] = i;
-                j = j + 1;
+                new_exp[j++] = i;
             }
         }
         return new Polynomial(new_coe, new_exp);
@@ -163,7 +164,7 @@ public class Polynomial{
                 this.coefficients[i] = temp2;
             }
         }
-        if(other_Flag){
+        if(other_Flag) {
             int k = other.exp.length;
             for (int x = 0; x < k - 1; x++) {
                 int min_idx_other = x;
@@ -179,41 +180,34 @@ public class Polynomial{
                 other.coefficients[x] = temp4;
             }
         }
-        //find the largest exp in my array
-        int max_this = this.exp[0], max_other = other.exp[0];
-        for(int i = 1; i < this.exp.length; i++) {
-            if(this.exp[i] > max_this)
-                max_this = this.exp[i];
-        }
-        for(int j = 1; j < other.exp.length; j++) {
-            if(other.exp[j] > max_other)
-                max_other = other.exp[j];
-        }
-        double[] product = new double[max_this + max_other + 1];
+        //after sorting, find the largest exp in my array
+        int max_this = this.exp[this.exp.length - 1], max_other = other.exp[other.exp.length - 1];
+        double[] temp_product = new double[max_this + max_other + 1];
         for(int i = 0; i < this.exp.length; i++) {
             for(int j = 0; j < other.exp.length; j++) {
                 int index = this.exp[i] + other.exp[j];
-                product[index] = product[index] + (this.coefficients[i] * other.coefficients[j]);
+                double res_coe = this.coefficients[i] * other.coefficients[j];
+                temp_product[index] = temp_product[index] + res_coe;
             }
         }
-        //count how many none-zero element
+        //count how many non-zero element
         int count = 0;
-        for (double v : product) {
+        for (double v : temp_product) {
             if (v == 0) {
                 ;
-            }
-            else count++;
+            } else count++;
         }
         double[] coe = new double[count];
         int[] exp = new int[count];
-        for(int i = 0, index = 0; i < product.length; i++) {
-            if(product[i] != 0) {
-                coe[index] = product[i];
-                exp[index] = i;
-                index++;
+        for(int i = 0, index = 0; i < temp_product.length; i++) {
+            if(temp_product[i] == 0) {
+                ;
+            }else{
+                coe[index] = temp_product[i];
+                exp[index++] = i;
             }
         }
-        return new Polynomial(coe,exp);
+        return new Polynomial(coe, exp);
     }
     //--------------------------------------------
     public void saveToFile(String filename) throws IOException {
@@ -250,13 +244,9 @@ public class Polynomial{
     public double evaluate(double x) {
         double sum = 0.0;
         for(int i = 0; i < coefficients.length; i++) {
-            //get the coefficient
-            double coe = coefficients[i];
-            //get the exp
-            int exponential = exp[i];
             //check if it is just a constant
-            if(exp[i] == 0){sum += coe; continue;}
-            sum = sum + coe * Math.pow(x, exponential);
+            if(exp[i] == 0){sum += coefficients[i]; continue;}
+            sum = sum + coefficients[i] * Math.pow(x, exp[i]);
         }
         return sum;
     }
